@@ -11,10 +11,6 @@ checkpoints/
 notebooks/
 tests/
 
-artifacts/final_experiment/plots/*.pdf
-artifacts/final_experiment/plots/*.png
 
-artifacts/final_experiment/architecture/*.pdf
-artifacts/final_experiment/architecture/*.png
 
 *.ipynb
