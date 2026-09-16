@@ -1,0 +1,1858 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
+
+<title>Process Intelligence Platform</title>
+
+<style>
+
+:root {
+    --bg:#f5f7fa;
+    --surface:#ffffff;
+    --surface2:#f8fafc;
+    --text:#111827;
+    --muted:#64748b;
+    --light:#94a3b8;
+    --border:#e5e7eb;
+    --dark:#111827;
+    --dark2:#1f2937;
+    --green:#15803d;
+    --radius:14px;
+    --shadow:0 5px 20px rgba(15,23,42,.055);
+}
+
+* {
+    box-sizing:border-box;
+}
+
+body {
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Inter,
+        Arial,
+        sans-serif;
+}
+
+button,
+select {
+    font-family:inherit;
+}
+
+.header {
+    height:72px;
+    background:white;
+    border-bottom:1px solid var(--border);
+    position:sticky;
+    top:0;
+    z-index:100;
+}
+
+.header-inner {
+    max-width:1440px;
+    height:100%;
+    margin:auto;
+    padding:0 30px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+}
+
+.brand {
+    display:flex;
+    align-items:center;
+    gap:12px;
+}
+
+.logo {
+    width:38px;
+    height:38px;
+    border-radius:10px;
+    background:var(--dark);
+    color:white;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:13px;
+    font-weight:800;
+}
+
+.brand-title {
+    font-size:15px;
+    font-weight:750;
+}
+
+.brand-subtitle {
+    color:var(--muted);
+    font-size:10px;
+    margin-top:2px;
+}
+
+.nav {
+    display:flex;
+    gap:4px;
+}
+
+.nav button {
+    border:0;
+    background:transparent;
+    padding:9px 13px;
+    border-radius:8px;
+    color:var(--muted);
+    font-size:11px;
+    cursor:pointer;
+}
+
+.nav button:hover,
+.nav button.active {
+    background:#f1f3f6;
+    color:var(--text);
+    font-weight:650;
+}
+
+.status {
+    display:flex;
+    align-items:center;
+    gap:7px;
+    padding:7px 11px;
+    border:1px solid #dce8df;
+    border-radius:20px;
+    color:#166534;
+    background:#f7fcf8;
+    font-size:10px;
+    font-weight:650;
+}
+
+.dot {
+    width:7px;
+    height:7px;
+    background:#16a34a;
+    border-radius:50%;
+}
+
+.container {
+    max-width:1440px;
+    margin:auto;
+    padding:34px 30px 60px;
+}
+
+.page {
+    display:none;
+}
+
+.page.active {
+    display:block;
+}
+
+.heading {
+    margin-bottom:27px;
+}
+
+.eyebrow {
+    color:var(--light);
+    font-size:10px;
+    font-weight:750;
+    letter-spacing:1.4px;
+    text-transform:uppercase;
+    margin-bottom:7px;
+}
+
+h1 {
+    margin:0;
+    font-size:30px;
+    letter-spacing:-.8px;
+}
+
+.heading p {
+    color:var(--muted);
+    font-size:13px;
+    max-width:720px;
+    line-height:1.6;
+    margin:8px 0 0;
+}
+
+.kpis {
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:15px;
+    margin-bottom:20px;
+}
+
+.kpi {
+    background:white;
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:19px;
+    box-shadow:var(--shadow);
+}
+
+.kpi-label {
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:.7px;
+    font-size:10px;
+    font-weight:650;
+}
+
+.kpi-value {
+    font-size:27px;
+    font-weight:750;
+    letter-spacing:-.7px;
+    margin-top:10px;
+}
+
+.kpi-note {
+    color:var(--light);
+    font-size:10px;
+    margin-top:4px;
+}
+
+.grid2 {
+    display:grid;
+    grid-template-columns:1.1fr .9fr;
+    gap:18px;
+}
+
+.card {
+    background:white;
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    overflow:hidden;
+    margin-bottom:18px;
+}
+
+.card-header {
+    padding:19px 21px 14px;
+    border-bottom:1px solid #f0f2f5;
+}
+
+.card-title {
+    font-size:15px;
+    font-weight:720;
+}
+
+.card-subtitle {
+    color:var(--muted);
+    font-size:11px;
+    margin-top:4px;
+    line-height:1.5;
+}
+
+.card-body {
+    padding:20px 21px;
+}
+
+.trace-area {
+    min-height:110px;
+    border:1px dashed #cbd5e1;
+    background:var(--surface2);
+    border-radius:10px;
+    padding:13px;
+}
+
+.empty-trace {
+    min-height:80px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:var(--light);
+    font-size:11px;
+}
+
+.chip {
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    padding:8px 10px;
+    background:white;
+    border:1px solid #dbe1e8;
+    border-radius:8px;
+    font-size:10px;
+    font-weight:650;
+    margin:3px;
+}
+
+.chip-number {
+    width:18px;
+    height:18px;
+    border-radius:5px;
+    background:var(--dark);
+    color:white;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:8px;
+}
+
+.arrow {
+    color:#94a3b8;
+    margin:0 2px;
+}
+
+.controls {
+    display:grid;
+    grid-template-columns:1fr auto;
+    gap:9px;
+    margin-top:15px;
+}
+
+select {
+    height:40px;
+    border:1px solid #d5dbe3;
+    border-radius:8px;
+    padding:0 10px;
+    background:white;
+    font-size:11px;
+}
+
+.primary {
+    height:40px;
+    border:0;
+    border-radius:8px;
+    background:var(--dark);
+    color:white;
+    padding:0 16px;
+    font-size:11px;
+    font-weight:650;
+    cursor:pointer;
+}
+
+.primary:hover {
+    background:var(--dark2);
+}
+
+.secondary {
+    height:36px;
+    border:1px solid var(--border);
+    border-radius:8px;
+    background:white;
+    color:var(--muted);
+    padding:0 13px;
+    font-size:10px;
+    cursor:pointer;
+}
+
+.actions {
+    display:flex;
+    gap:8px;
+    margin-top:10px;
+}
+
+.info-grid {
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:9px;
+    margin-top:17px;
+}
+
+.info {
+    background:var(--surface2);
+    border:1px solid #edf0f4;
+    border-radius:8px;
+    padding:11px;
+}
+
+.info-label {
+    color:var(--light);
+    font-size:9px;
+    text-transform:uppercase;
+}
+
+.info-value {
+    margin-top:5px;
+    font-size:13px;
+    font-weight:700;
+}
+
+.results {
+    min-height:320px;
+}
+
+.result-empty {
+    min-height:300px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    text-align:center;
+    color:var(--light);
+}
+
+.ai-icon {
+    width:45px;
+    height:45px;
+    border-radius:11px;
+    background:#f1f3f6;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:12px;
+    font-weight:800;
+    margin-bottom:12px;
+}
+
+.result-empty strong {
+    color:#475569;
+    font-size:12px;
+}
+
+.result-empty span {
+    max-width:260px;
+    font-size:10px;
+    line-height:1.5;
+    margin-top:5px;
+}
+
+.prediction {
+    padding:14px 0;
+    border-bottom:1px solid #eef1f4;
+}
+
+.prediction:last-child {
+    border-bottom:0;
+}
+
+.pred-top {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:8px;
+}
+
+.pred-name {
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:11px;
+    font-weight:650;
+}
+
+.rank {
+    width:21px;
+    height:21px;
+    background:var(--dark);
+    color:white;
+    border-radius:6px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:9px;
+}
+
+.prob {
+    font-size:11px;
+    font-weight:750;
+}
+
+.bar-bg {
+    height:7px;
+    background:#edf0f3;
+    border-radius:10px;
+    overflow:hidden;
+}
+
+.bar {
+    height:100%;
+    background:#374151;
+    border-radius:10px;
+    transition:width .7s ease;
+}
+
+.conf {
+    color:var(--light);
+    font-size:9px;
+    margin-top:6px;
+}
+
+.analytics-grid {
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:18px;
+}
+
+.figure-card img {
+    width:100%;
+    display:block;
+}
+
+.figure-card .card-body {
+    padding:12px;
+}
+
+.full {
+    grid-column:1 / -1;
+}
+
+.architecture {
+    width:100%;
+    background:#fafbfc;
+    border:1px solid var(--border);
+    border-radius:10px;
+}
+
+.metric-table {
+    width:100%;
+    border-collapse:collapse;
+    font-size:11px;
+}
+
+.metric-table th,
+.metric-table td {
+    padding:10px;
+    border-bottom:1px solid #edf0f4;
+    text-align:left;
+}
+
+.metric-table th {
+    color:var(--muted);
+    font-size:9px;
+    text-transform:uppercase;
+    letter-spacing:.5px;
+}
+
+.metric-table td:last-child,
+.metric-table th:last-child {
+    text-align:right;
+}
+
+.footer {
+    max-width:1440px;
+    margin:auto;
+    padding:20px 30px 45px;
+    border-top:1px solid var(--border);
+    display:flex;
+    justify-content:space-between;
+    color:var(--light);
+    font-size:9px;
+}
+
+@media(max-width:1000px) {
+
+    .grid2,
+    .analytics-grid {
+        grid-template-columns:1fr;
+    }
+
+    .kpis {
+        grid-template-columns:repeat(2,1fr);
+    }
+
+    .nav {
+        display:none;
+    }
+
+}
+
+@media(max-width:550px) {
+
+    .container {
+        padding:25px 15px;
+    }
+
+    .header-inner {
+        padding:0 15px;
+    }
+
+    .kpis {
+        grid-template-columns:1fr;
+    }
+
+    .controls {
+        grid-template-columns:1fr;
+    }
+
+    .info-grid {
+        grid-template-columns:1fr;
+    }
+
+    .footer {
+        padding:20px 15px;
+        flex-direction:column;
+        gap:6px;
+    }
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<header class="header">
+
+<div class="header-inner">
+
+    <div class="brand">
+
+        <div class="logo">
+            PG
+        </div>
+
+        <div>
+
+            <div class="brand-title">
+                Process Intelligence
+            </div>
+
+            <div class="brand-subtitle">
+                Graph Neural Network Analytics Platform
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <nav class="nav">
+
+        <button
+            class="active"
+            onclick="showPage('overview', this)"
+        >
+            Overview
+        </button>
+
+        <button
+            onclick="showPage('prediction', this)"
+        >
+            Live Prediction
+        </button>
+
+        <button
+            onclick="showPage('analytics', this)"
+        >
+            Model Analytics
+        </button>
+
+        <button
+            onclick="showPage('architecture', this)"
+        >
+            Architecture
+        </button>
+
+    </nav>
+
+
+    <div class="status">
+
+        <span class="dot"></span>
+
+        MODEL ONLINE
+
+    </div>
+
+</div>
+
+</header>
+
+
+
+<main class="container">
+
+
+<!-- =====================================================
+     OVERVIEW
+===================================================== -->
+
+<section
+    id="overview"
+    class="page active"
+>
+
+<div class="heading">
+
+    <div class="eyebrow">
+        Predictive Process Analytics
+    </div>
+
+    <h1>
+        Process Intelligence Platform
+    </h1>
+
+    <p>
+        Enterprise-style process monitoring and
+        next-activity prediction powered by the
+        ProcessGAT-XL graph neural network.
+    </p>
+
+</div>
+
+
+<div class="kpis">
+
+    <div class="kpi">
+
+        <div class="kpi-label">
+            Test Top-1
+        </div>
+
+        <div class="kpi-value">
+            76.03%
+        </div>
+
+        <div class="kpi-note">
+            First-choice prediction accuracy
+        </div>
+
+    </div>
+
+
+    <div class="kpi">
+
+        <div class="kpi-label">
+            Test Top-3
+        </div>
+
+        <div class="kpi-value">
+            99.88%
+        </div>
+
+        <div class="kpi-note">
+            Prediction within top three
+        </div>
+
+    </div>
+
+
+    <div class="kpi">
+
+        <div class="kpi-label">
+            Macro-F1
+        </div>
+
+        <div class="kpi-value">
+            67.55%
+        </div>
+
+        <div class="kpi-note">
+            Balanced class-level performance
+        </div>
+
+    </div>
+
+
+    <div class="kpi">
+
+        <div class="kpi-label">
+            Model Size
+        </div>
+
+        <div class="kpi-value">
+            190.9K
+        </div>
+
+        <div class="kpi-note">
+            Trainable parameters
+        </div>
+
+    </div>
+
+</div>
+
+
+<div class="grid2">
+
+
+<div class="card">
+
+    <div class="card-header">
+
+        <div class="card-title">
+            Validation Performance
+        </div>
+
+        <div class="card-subtitle">
+            Model selection history using validation Macro-F1.
+        </div>
+
+    </div>
+
+    <div class="card-body">
+
+        <img
+            src="/plots/validation_macro_f1.png"
+            style="width:100%;"
+        >
+
+    </div>
+
+</div>
+
+
+<div class="card">
+
+    <div class="card-header">
+
+        <div class="card-title">
+            Training Dynamics
+        </div>
+
+        <div class="card-subtitle">
+            Optimization trajectory of the final experiment.
+        </div>
+
+    </div>
+
+    <div class="card-body">
+
+        <img
+            src="/plots/training_loss.png"
+            style="width:100%;"
+        >
+
+    </div>
+
+</div>
+
+
+</div>
+
+</section>
+
+
+
+<!-- =====================================================
+     PREDICTION
+===================================================== -->
+
+<section
+    id="prediction"
+    class="page"
+>
+
+<div class="heading">
+
+    <div class="eyebrow">
+        Live Inference
+    </div>
+
+    <h1>
+        Next-Activity Prediction
+    </h1>
+
+    <p>
+        Construct an observed process trace and generate
+        a ranked forecast using the final ProcessGAT-XL
+        checkpoint.
+    </p>
+
+</div>
+
+
+<div class="grid2">
+
+
+<div>
+
+<div class="card">
+
+    <div class="card-header">
+
+        <div class="card-title">
+            Process Trace Builder
+        </div>
+
+        <div class="card-subtitle">
+            Add activities in their observed order.
+        </div>
+
+    </div>
+
+
+    <div class="card-body">
+
+        <div
+            id="trace"
+            class="trace-area"
+        >
+
+            <div class="empty-trace">
+                Add activities below
+            </div>
+
+        </div>
+
+
+        <div class="controls">
+
+            <select id="activity">
+
+                <option value="">
+                    Select activity
+                </option>
+
+                <option>W_Afhandelen leads</option>
+
+                <option>W_Beoordelen fraude</option>
+
+                <option>W_Completeren aanvraag</option>
+
+                <option>W_Nabellen incomplete dossiers</option>
+
+                <option>W_Nabellen offertes</option>
+
+                <option>W_Valideren aanvraag</option>
+
+            </select>
+
+
+            <button
+                class="primary"
+                onclick="addActivity()"
+            >
+                + Add Activity
+            </button>
+
+        </div>
+
+
+        <div class="actions">
+
+            <button
+                class="primary"
+                onclick="predict()"
+            >
+                Generate Forecast
+            </button>
+
+            <button
+                class="secondary"
+                onclick="clearTrace()"
+            >
+                Clear
+            </button>
+
+        </div>
+
+
+        <div class="info-grid">
+
+            <div class="info">
+
+                <div class="info-label">
+                    Trace Length
+                </div>
+
+                <div
+                    id="traceLength"
+                    class="info-value"
+                >
+                    0
+                </div>
+
+            </div>
+
+
+            <div class="info">
+
+                <div class="info-label">
+                    Unique Activities
+                </div>
+
+                <div
+                    id="uniqueActivities"
+                    class="info-value"
+                >
+                    0
+                </div>
+
+            </div>
+
+
+            <div class="info">
+
+                <div class="info-label">
+                    Model
+                </div>
+
+                <div class="info-value">
+                    ProcessGAT-XL
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<div class="card">
+
+    <div class="card-header">
+
+        <div class="card-title">
+            Model Configuration
+        </div>
+
+    </div>
+
+    <div class="card-body">
+
+        <table class="metric-table">
+
+            <tr>
+                <th>Architecture</th>
+                <td>GATv2</td>
+            </tr>
+
+            <tr>
+                <th>Attention Heads</th>
+                <td>8</td>
+            </tr>
+
+            <tr>
+                <th>Layers</th>
+                <td>3</td>
+            </tr>
+
+            <tr>
+                <th>Hidden Dimension</th>
+                <td>64</td>
+            </tr>
+
+            <tr>
+                <th>Edge Dimension</th>
+                <td>8</td>
+            </tr>
+
+            <tr>
+                <th>Dropout</th>
+                <td>0.25</td>
+            </tr>
+
+        </table>
+
+    </div>
+
+</div>
+
+</div>
+
+
+<div class="card">
+
+    <div class="card-header">
+
+        <div class="card-title">
+            Forecast
+        </div>
+
+        <div class="card-subtitle">
+            Ranked next-activity probabilities.
+        </div>
+
+    </div>
+
+
+    <div
+        id="results"
+        class="card-body results"
+    >
+
+        <div class="result-empty">
+
+            <div class="ai-icon">
+                AI
+            </div>
+
+            <strong>
+                Awaiting process context
+            </strong>
+
+            <span>
+                Build a process trace and generate
+                a forecast to view ranked predictions.
+            </span>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+</div>
+
+</section>
+
+
+
+<!-- =====================================================
+     ANALYTICS
+===================================================== -->
+
+<section
+    id="analytics"
+    class="page"
+>
+
+<div class="heading">
+
+    <div class="eyebrow">
+        Model Analytics
+    </div>
+
+    <h1>
+        Performance & Diagnostics
+    </h1>
+
+    <p>
+        Evaluation artifacts generated directly from the
+        final held-out experiment.
+    </p>
+
+</div>
+
+
+<div class="analytics-grid">
+
+
+<div class="card figure-card">
+
+    <div class="card-header">
+
+        <div class="card-title">
+            Training Loss
+        </div>
+
+    </div>
+
+    <div class="card-body">
+
+        <img
+            src="/plots/training_loss.png"
+        >
+
+    </div>
+
+</div>
+
+
+<div class="card figure-card">
+
+    <div class="card-header">
+
+        <div class="card-title">
+            Validation Macro-F1
+        </div>
+
+    </div>
+
+    <div class="card-body">
+
+        <img
+            src="/plots/validation_macro_f1.png"
+        >
+
+    </div>
+
+</div>
+
+
+<div class="card figure-card">
+
+    <div class="card-header">
+
+        <div class="card-title">
+            Validation Top-k Accuracy
+        </div>
+
+    </div>
+
+    <div class="card-body">
+
+        <img
+            src="/plots/validation_topk.png"
+        >
+
+    </div>
+
+</div>
+
+
+<div class="card figure-card">
+
+    <div class="card-header">
+
+        <div class="card-title">
+            Per-Class F1
+        </div>
+
+    </div>
+
+    <div class="card-body">
+
+        <img
+            src="/plots/per_class_f1.png"
+        >
+
+    </div>
+
+</div>
+
+
+<div class="card figure-card">
+
+    <div class="card-header">
+
+        <div class="card-title">
+            Confusion Matrix
+        </div>
+
+    </div>
+
+    <div class="card-body">
+
+        <img
+            src="/plots/confusion_matrix.png"
+        >
+
+    </div>
+
+</div>
+
+
+<div class="card figure-card">
+
+    <div class="card-header">
+
+        <div class="card-title">
+            Normalized Confusion Matrix
+        </div>
+
+    </div>
+
+    <div class="card-body">
+
+        <img
+            src="/plots/normalized_confusion_matrix.png"
+        >
+
+    </div>
+
+</div>
+
+
+<div class="card full">
+
+    <div class="card-header">
+
+        <div class="card-title">
+            Test Set Metrics
+        </div>
+
+        <div class="card-subtitle">
+            Held-out test evaluation.
+        </div>
+
+    </div>
+
+    <div class="card-body">
+
+        <table class="metric-table">
+
+            <thead>
+
+                <tr>
+                    <th>Metric</th>
+                    <th>Value</th>
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+                <tr>
+                    <td>Top-1 Accuracy</td>
+                    <td>76.03%</td>
+                </tr>
+
+                <tr>
+                    <td>Top-3 Accuracy</td>
+                    <td>99.88%</td>
+                </tr>
+
+                <tr>
+                    <td>Macro-F1</td>
+                    <td>67.55%</td>
+                </tr>
+
+                <tr>
+                    <td>Weighted-F1</td>
+                    <td>75.44%</td>
+                </tr>
+
+                <tr>
+                    <td>Best Validation Epoch</td>
+                    <td>52</td>
+                </tr>
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+
+</div>
+
+</section>
+
+
+
+<!-- =====================================================
+     ARCHITECTURE
+===================================================== -->
+
+<section
+    id="architecture"
+    class="page"
+>
+
+<div class="heading">
+
+    <div class="eyebrow">
+        Model Architecture
+    </div>
+
+    <h1>
+        ProcessGAT-XL Architecture
+    </h1>
+
+    <p>
+        Graph-based deep learning architecture used for
+        next-activity prediction.
+    </p>
+
+</div>
+
+
+<div class="card">
+
+    <div class="card-body">
+
+        <img
+            class="architecture"
+            src="/architecture/processgat_xl_architecture.png"
+        >
+
+    </div>
+
+</div>
+
+
+<div class="grid2">
+
+
+<div class="card">
+
+    <div class="card-header">
+
+        <div class="card-title">
+            Architecture Specification
+        </div>
+
+    </div>
+
+    <div class="card-body">
+
+        <table class="metric-table">
+
+            <tr>
+                <th>Input Features</th>
+                <td>6 node features</td>
+            </tr>
+
+            <tr>
+                <th>Graph Layer</th>
+                <td>GATv2Conv</td>
+            </tr>
+
+            <tr>
+                <th>Attention Heads</th>
+                <td>8</td>
+            </tr>
+
+            <tr>
+                <th>Hidden Dimension</th>
+                <td>64</td>
+            </tr>
+
+            <tr>
+                <th>Graph Layers</th>
+                <td>3</td>
+            </tr>
+
+            <tr>
+                <th>Normalization</th>
+                <td>LayerNorm</td>
+            </tr>
+
+            <tr>
+                <th>Activation</th>
+                <td>GELU</td>
+            </tr>
+
+            <tr>
+                <th>Pooling</th>
+                <td>Attention + Mean + Max</td>
+            </tr>
+
+            <tr>
+                <th>Parameters</th>
+                <td>190,895</td>
+            </tr>
+
+        </table>
+
+    </div>
+
+</div>
+
+
+<div class="card">
+
+    <div class="card-header">
+
+        <div class="card-title">
+            Dataset
+        </div>
+
+    </div>
+
+    <div class="card-body">
+
+        <table class="metric-table">
+
+            <tr>
+                <th>Event Log</th>
+                <td>BPIC12_W</td>
+            </tr>
+
+            <tr>
+                <th>Events</th>
+                <td>72,413</td>
+            </tr>
+
+            <tr>
+                <th>Cases</th>
+                <td>9,658</td>
+            </tr>
+
+            <tr>
+                <th>Prefix Graphs</th>
+                <td>62,755</td>
+            </tr>
+
+            <tr>
+                <th>Activities</th>
+                <td>6</td>
+            </tr>
+
+            <tr>
+                <th>Split</th>
+                <td>Case-level</td>
+            </tr>
+
+        </table>
+
+    </div>
+
+</div>
+
+
+</div>
+
+</section>
+
+
+</main>
+
+
+
+<footer class="footer">
+
+    <div>
+        Process Intelligence Platform • ProcessGAT-XL
+    </div>
+
+    <div>
+        BPIC12_W • Graph Neural Networks • Research Prototype
+    </div>
+
+</footer>
+
+
+
+<script>
+
+let trace = [];
+
+
+function showPage(id, button) {
+
+    document
+        .querySelectorAll(".page")
+        .forEach(
+            page => page.classList.remove("active")
+        );
+
+
+    document
+        .getElementById(id)
+        .classList.add("active");
+
+
+    document
+        .querySelectorAll(".nav button")
+        .forEach(
+            btn => btn.classList.remove("active")
+        );
+
+
+    if (button) {
+        button.classList.add("active");
+    }
+
+
+    window.scrollTo({
+        top:0,
+        behavior:"smooth"
+    });
+
+}
+
+
+function renderTrace() {
+
+    const area =
+        document.getElementById("trace");
+
+
+    document.getElementById(
+        "traceLength"
+    ).textContent = trace.length;
+
+
+    document.getElementById(
+        "uniqueActivities"
+    ).textContent =
+        new Set(trace).size;
+
+
+    if (!trace.length) {
+
+        area.innerHTML = `
+            <div class="empty-trace">
+                Add activities below
+            </div>
+        `;
+
+        return;
+    }
+
+
+    area.innerHTML =
+        trace.map(
+            (activity,index) => {
+
+                let result = `
+
+                    <span class="chip">
+
+                        <span class="chip-number">
+                            ${index+1}
+                        </span>
+
+                        ${activity}
+
+                    </span>
+                `;
+
+
+                if (
+                    index <
+                    trace.length-1
+                ) {
+
+                    result += `
+                        <span class="arrow">→</span>
+                    `;
+
+                }
+
+
+                return result;
+
+            }
+        ).join("");
+
+}
+
+
+function addActivity() {
+
+    const select =
+        document.getElementById(
+            "activity"
+        );
+
+
+    if (!select.value) {
+        return;
+    }
+
+
+    trace.push(
+        select.value
+    );
+
+
+    select.value = "";
+
+    renderTrace();
+
+}
+
+
+function clearTrace() {
+
+    trace = [];
+
+    renderTrace();
+
+
+    document.getElementById(
+        "results"
+    ).innerHTML = `
+
+        <div class="result-empty">
+
+            <div class="ai-icon">
+                AI
+            </div>
+
+            <strong>
+                Awaiting process context
+            </strong>
+
+            <span>
+                Build a process trace and generate
+                a forecast to view predictions.
+            </span>
+
+        </div>
+
+    `;
+
+}
+
+
+function confidence(probability) {
+
+    if (probability >= .70)
+        return "High confidence";
+
+    if (probability >= .40)
+        return "Moderate confidence";
+
+    return "Lower confidence";
+
+}
+
+
+async function predict() {
+
+    const results =
+        document.getElementById(
+            "results"
+        );
+
+
+    if (!trace.length) {
+
+        results.innerHTML = `
+
+            <div class="result-empty">
+
+                <strong>
+                    Trace required
+                </strong>
+
+                <span>
+                    Add at least one observed activity.
+                </span>
+
+            </div>
+
+        `;
+
+        return;
+    }
+
+
+    results.innerHTML = `
+
+        <div class="result-empty">
+
+            <div class="ai-icon">
+                AI
+            </div>
+
+            <strong>
+                Running ProcessGAT-XL
+            </strong>
+
+            <span>
+                Generating next-activity forecast...
+            </span>
+
+        </div>
+
+    `;
+
+
+    try {
+
+        const response =
+            await fetch(
+                "/predict",
+                {
+                    method:"POST",
+
+                    headers:{
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body:JSON.stringify({
+                        trace:trace
+                    })
+                }
+            );
+
+
+        const data =
+            await response.json();
+
+
+        if (data.error) {
+            throw new Error(
+                data.error
+            );
+        }
+
+
+        results.innerHTML = "";
+
+
+        data.predictions
+            .slice(0,3)
+            .forEach(
+                (prediction,index) => {
+
+                    const p =
+                        prediction.probability;
+
+                    const percent =
+                        p * 100;
+
+
+                    results.innerHTML += `
+
+                        <div class="prediction">
+
+                            <div class="pred-top">
+
+                                <div class="pred-name">
+
+                                    <span class="rank">
+                                        ${index+1}
+                                    </span>
+
+                                    ${prediction.activity}
+
+                                </div>
+
+                                <div class="prob">
+                                    ${percent.toFixed(2)}%
+                                </div>
+
+                            </div>
+
+
+                            <div class="bar-bg">
+
+                                <div
+                                    class="bar"
+                                    style="
+                                        width:${percent}%;
+                                    "
+                                ></div>
+
+                            </div>
+
+
+                            <div class="conf">
+                                ${confidence(p)}
+                            </div>
+
+                        </div>
+
+                    `;
+
+                }
+            );
+
+    }
+
+    catch(error) {
+
+        results.innerHTML = `
+
+            <div class="result-empty">
+
+                <strong>
+                    Forecast unavailable
+                </strong>
+
+                <span>
+                    ${error.message}
+                </span>
+
+            </div>
+
+        `;
+
+    }
+
+}
+
+
+renderTrace();
+
+</script>
+
+</body>
+
+</html>

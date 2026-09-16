@@ -1,0 +1,30 @@
+{
+  "model_name": "ProcessGAT-XL",
+  "class": "ProcessGAT",
+  "parameters": 190895,
+  "configuration": {
+    "in_channels": 6,
+    "hidden": 64,
+    "num_layers": 3,
+    "heads": 8,
+    "edge_dim": 8,
+    "dropout": 0.25
+  },
+  "input": {
+    "node_features": 6,
+    "edge_features": 1
+  },
+  "graph_processing": {
+    "convolution": "GATv2Conv",
+    "layers": 3,
+    "attention_heads": 8,
+    "edge_dimension": 8,
+    "dropout": 0.25,
+    "normalization": "LayerNorm",
+    "activation": "GELU",
+    "pooling": "learned graph attention + global mean + global max"
+  },
+  "optimizer": "AdamW",
+  "scheduler": "warmup + cosine decay",
+  "loss": "cross entropy with label smoothing and effective-number class weighting"
+}

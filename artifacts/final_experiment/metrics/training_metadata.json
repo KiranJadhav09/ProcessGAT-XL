@@ -1,0 +1,8 @@
+{
+  "best_epoch": 52,
+  "train_graphs": 44295,
+  "val_graphs": 9160,
+  "test_graphs": 9300,
+  "training_time_seconds": 241.52628898620605,
+  "training_time_minutes": 4.025438149770101
+}

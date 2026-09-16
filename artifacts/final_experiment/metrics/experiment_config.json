@@ -1,0 +1,30 @@
+{
+  "experiment": "BPIC12_W_ProcessGAT_XL_Final",
+  "dataset": "data/BPIC12_W.xes",
+  "model": {
+    "in_channels": 6,
+    "hidden": 64,
+    "num_layers": 3,
+    "heads": 8,
+    "edge_dim": 8,
+    "dropout": 0.25
+  },
+  "training": {
+    "epochs": 100,
+    "batch_size": 256,
+    "lr": 0.0002,
+    "weight_decay": 0.0001,
+    "label_smoothing": 0.05,
+    "warmup_epochs": 5,
+    "patience": 20,
+    "seed": 42
+  },
+  "device": "cpu",
+  "protocol": {
+    "split": "case-level",
+    "validation_selection_metric": "Macro-F1",
+    "test_used_for_model_selection": false,
+    "random_seed": 42
+  },
+  "note": "The 64/8/8/0.25/2e-4 configuration was identified during exploratory tuning and is treated here as a candidate configuration."
+}

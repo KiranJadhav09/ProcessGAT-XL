@@ -1,0 +1,33 @@
+{
+  "num_graphs": 62755,
+  "num_unique_cases": 7469,
+  "num_activities": 6,
+  "activities": [
+    "W_Afhandelen leads",
+    "W_Beoordelen fraude",
+    "W_Completeren aanvraag",
+    "W_Nabellen incomplete dossiers",
+    "W_Nabellen offertes",
+    "W_Valideren aanvraag"
+  ],
+  "nodes": {
+    "mean": 2.3598279021591906,
+    "std": 1.2121718636000944,
+    "min": 1,
+    "max": 6
+  },
+  "edges": {
+    "mean": 2.9426818580192813,
+    "std": 2.0880117982789606,
+    "min": 1,
+    "max": 11
+  },
+  "label_distribution": {
+    "W_Completeren aanvraag": 19115,
+    "W_Nabellen offertes": 22976,
+    "W_Valideren aanvraag": 7895,
+    "W_Nabellen incomplete dossiers": 11407,
+    "W_Afhandelen leads": 1159,
+    "W_Beoordelen fraude": 203
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "activities": [
+    "W_Afhandelen leads",
+    "W_Beoordelen fraude",
+    "W_Completeren aanvraag",
+    "W_Nabellen incomplete dossiers",
+    "W_Nabellen offertes",
+    "W_Valideren aanvraag"
+  ],
+  "vocab": {
+    "W_Afhandelen leads": 0,
+    "W_Beoordelen fraude": 1,
+    "W_Completeren aanvraag": 2,
+    "W_Nabellen incomplete dossiers": 3,
+    "W_Nabellen offertes": 4,
+    "W_Valideren aanvraag": 5
+  }
+}
