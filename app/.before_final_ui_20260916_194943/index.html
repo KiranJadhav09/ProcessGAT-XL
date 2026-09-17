@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#ffffff">
+<meta name="description" content="ProcessGAT — graph attention for next-activity prediction.">
+<title>ProcessGAT — Predict what comes next</title>
+<link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+<header class="nav-shell" id="siteNav">
+  <div class="nav-inner">
+    <button class="logo" data-page="home" aria-label="ProcessGAT home">ProcessGAT</button>
+    <nav class="nav-links" aria-label="Primary">
+      <button data-page="predict">Demo</button>
+      <button data-page="technology">Research</button>
+      <button id="githubNav">GitHub</button>
+      <button data-page="evidence">Results</button>
+    </nav>
+    <button class="menu" id="menu" aria-label="Open menu">Menu</button>
+  </div>
+  <nav class="mobile-links" id="mobileLinks">
+    <button data-page="predict">Demo</button>
+    <button data-page="technology">Research</button>
+    <button id="githubMobile">GitHub</button>
+    <button data-page="evidence">Results</button>
+  </nav>
+</header>
+
+<main>
+<section id="home" class="page active">
+  <div class="hero shell reveal">
+    <div class="eyebrow">PROCESS INTELLIGENCE · PROCESSGAT-XL</div>
+    <h1>Predict what comes next<br><span>in a business process.</span></h1>
+    <p class="hero-sub">A graph attention model that learns from real event-log structure and predicts the next activity from a partial case history.</p>
+    <div class="hero-buttons">
+      <button class="cta blue" data-page="predict">Try the Demo <b>→</b></button>
+      <button class="cta outline" id="githubHero">View on GitHub <b>↗</b></button>
+    </div>
+    <p class="hero-meta">BPIC 2012 W · 62,755 process-prefix graphs · 6-class next-activity prediction</p>
+  </div>
+
+  <div class="stats-band">
+    <div class="shell stat-grid">
+      <div class="stat"><strong data-count="9658">0</strong><span>Source cases</span></div>
+      <div class="stat"><strong data-count="62755">0</strong><span>Prefix graphs</span></div>
+      <div class="stat"><strong data-count="6">0</strong><span>Activity classes</span></div>
+    </div>
+  </div>
+
+  <section class="shell section intro-section">
+    <div class="section-label">THE IDEA</div>
+    <div class="split">
+      <div><h2>A process has structure.</h2></div>
+      <div><p>ProcessGAT converts each observed case prefix into a directed graph. Activities become nodes; directly-following relationships become edges with transition information. Graph attention then learns how that context relates to the next activity.</p></div>
+    </div>
+    <div class="process-visual" aria-label="Process graph visualization">
+      <div class="edge e1"></div><div class="edge e2"></div><div class="edge e3"></div>
+      <div class="pv n1"><b>01</b><span>Completeren aanvraag</span></div>
+      <div class="pv n2"><b>02</b><span>Valideren aanvraag</span></div>
+      <div class="pv n3"><b>03</b><span>Nabellen offertes</span></div>
+      <div class="pv n4"><b>04</b><span>Next activity</span></div>
+    </div>
+  </section>
+
+  <section class="band-dark">
+    <div class="shell dark-section">
+      <div class="section-label light">THE PIPELINE</div>
+      <h2>From event log<br>to prediction.</h2>
+      <div class="pipeline">
+        <div><i>01</i><b>Event log</b><span>BPIC 2012 W</span></div>
+        <div><i>02</i><b>Prefix</b><span>Partial case</span></div>
+        <div><i>03</i><b>Graph</b><span>Nodes + edges</span></div>
+        <div><i>04</i><b>Attention</b><span>GATv2 × 3</span></div>
+        <div><i>05</i><b>Prediction</b><span>Six classes</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="shell section">
+    <div class="section-label">THE EXPERIMENT</div>
+    <h2 class="section-title">Designed around the data.</h2>
+    <div class="three-up">
+      <article><small>01</small><h3>9,658</h3><p>Cases in the source BPIC 2012 W event log.</p></article>
+      <article><small>02</small><h3>7,469</h3><p>Cases represented in the generated prefix-graph corpus.</p></article>
+      <article><small>03</small><h3>190,895</h3><p>Trainable parameters in the final ProcessGAT-XL checkpoint.</p></article>
+    </div>
+  </section>
+</section>
+
+<section id="predict" class="page">
+  <div class="shell page-hero">
+    <div class="eyebrow">LIVE DEMO</div>
+    <h1>Build a trace.<br><span>See the next step.</span></h1>
+    <p>Use the actual deployed ProcessGAT-XL inference endpoint.</p>
+  </div>
+  <div class="shell demo-layout">
+    <div class="demo-panel">
+      <div class="panel-top"><span>INPUT</span><span>01</span></div>
+      <h2>Partial case</h2>
+      <p class="muted">Add activities in chronological order.</p>
+      <div class="activity-list" id="activityList"></div>
+      <div class="trace" id="trace"></div>
+      <div class="demo-controls">
+        <button class="cta blue" id="predictButton">Predict <b>→</b></button>
+        <button class="cta soft" id="clearTrace">Clear</button>
+      </div>
+      <div class="examples"><span>Examples</span><button data-example="1">01</button><button data-example="2">02</button><button data-example="3">03</button><button data-example="4">04</button></div>
+    </div>
+    <div class="demo-panel output-panel">
+      <div class="panel-top"><span>OUTPUT</span><span>02</span></div>
+      <h2>Next activity</h2>
+      <p id="predictionStatus" class="muted">Awaiting a trace.</p>
+      <div id="prediction" class="bars">
+        <div class="placeholder-bar"><span>Prediction 01</span><i></i></div>
+        <div class="placeholder-bar"><span>Prediction 02</span><i></i></div>
+        <div class="placeholder-bar"><span>Prediction 03</span><i></i></div>
+      </div>
+      <div class="output-note">ProcessGAT-XL · live inference endpoint</div>
+    </div>
+  </div>
+</section>
+
+<section id="technology" class="page">
+  <div class="shell page-hero">
+    <div class="eyebrow">RESEARCH</div>
+    <h1>Graph attention<br><span>for process structure.</span></h1>
+    <p>The architecture is deliberately compact: graph representation, multi-head attention, residual learning and graph-level prediction.</p>
+  </div>
+  <div class="shell section">
+    <div class="research-split">
+      <div class="research-copy">
+        <div class="section-label blue-text">GRAPH REPRESENTATION</div>
+        <h2>Activities become nodes.</h2>
+        <p>Each prefix is represented as a directed graph. Six normalized node features encode activity identity and process context, while transition information is carried through edge attributes.</p>
+        <div class="feature-lines">
+          <div><span>01</span><b>Activity index</b></div>
+          <div><span>02</span><b>First occurrence position</b></div>
+          <div><span>03</span><b>Occurrence frequency</b></div>
+          <div><span>04</span><b>Mean elapsed time</b></div>
+          <div><span>05</span><b>Resource diversity</b></div>
+          <div><span>06</span><b>Amount requested</b></div>
+        </div>
+      </div>
+      <div class="arch-card">
+        <img src="/architecture/processgat_xl_architecture.png" alt="ProcessGAT-XL architecture">
+      </div>
+    </div>
+  </div>
+  <div class="band-gray">
+    <div class="shell section">
+      <div class="section-label">MODEL SPECIFICATION</div>
+      <div class="specs">
+        <div><span>Graph layer</span><b>GATv2Conv</b></div><div><span>Hidden</span><b>64</b></div>
+        <div><span>Heads</span><b>8</b></div><div><span>Blocks</span><b>3 residual</b></div>
+        <div><span>Edge dimension</span><b>8</b></div><div><span>Dropout</span><b>0.25</b></div>
+        <div><span>Optimizer</span><b>AdamW</b></div><div><span>Learning rate</span><b>2 × 10⁻⁴</b></div>
+        <div><span>Batch</span><b>256</b></div><div><span>Label smoothing</span><b>0.05</b></div>
+        <div><span>Warm-up</span><b>5 epochs</b></div><div><span>Patience</span><b>20 epochs</b></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="evidence" class="page">
+  <div class="shell page-hero">
+    <div class="eyebrow">RESULTS</div>
+    <h1>Measured.<br><span>Then evaluated.</span></h1>
+    <p>Final held-out test metrics from the case-level evaluation protocol.</p>
+  </div>
+  <div class="shell section">
+    <div class="result-metrics">
+      <div><small>TOP-1</small><b>76.03%</b><span>Correct at rank one.</span></div>
+      <div><small>TOP-3</small><b>99.88%</b><span>Correct within three.</span></div>
+      <div><small>MACRO-F1</small><b>67.55%</b><span>Equal class weighting.</span></div>
+      <div><small>WEIGHTED-F1</small><b>75.44%</b><span>Support weighted.</span></div>
+    </div>
+  </div>
+  <div class="shell section">
+    <div class="chart-grid">
+      <article><div class="section-label">CONFUSION</div><h3>Normalized confusion matrix</h3><img src="/plots/normalized_confusion_matrix.png"></article>
+      <article><div class="section-label">VALIDATION</div><h3>Top-k performance</h3><img src="/plots/validation_topk.png"></article>
+      <article><div class="section-label">OPTIMIZATION</div><h3>Training loss</h3><img src="/plots/training_loss.png"></article>
+      <article><div class="section-label">SELECTION</div><h3>Validation Macro-F1</h3><img src="/plots/validation_macro_f1.png"></article>
+    </div>
+  </div>
+  <div class="shell section">
+    <div class="section-label">CLASS DETAIL</div><h2 class="section-title">Performance by activity.</h2>
+    <div class="table-card"><table id="classTable"><thead><tr><th>Activity</th><th>F1</th><th>Test support</th></tr></thead><tbody></tbody></table></div>
+  </div>
+  <div class="shell disclosure"><b>Evaluation note.</b> The final checkpoint was selected using validation Macro-F1, followed by held-out test evaluation. Earlier exploratory tuning used a test-like subset; that exploratory score is not evidence of globally optimal hyperparameters.</div>
+</section>
+</main>
+
+<footer class="footer">
+  <div class="shell footer-grid">
+    <div><b>ProcessGAT</b><p>Graph attention for next-activity prediction.</p></div>
+    <div><span>Explore</span><button data-page="predict">Demo</button><button data-page="technology">Research</button><button data-page="evidence">Results</button></div>
+    <div><span>Project</span><button id="githubFooter">GitHub</button><p>ProcessGAT-XL · 2026</p></div>
+  </div>
+  <div class="shell footer-bottom">ProcessGAT · BPIC 2012 W · Process intelligence</div>
+</footer>
+
+<script>
+const CLASSES=__CLASSES__;
+const F1=__F1__;
+const SUPPORT=__SUPPORT__;
+const GITHUB="https://github.com/KiranJadhav09/ProcessGAT-XL";
+let trace=[];
+
+function go(id){
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+  document.querySelectorAll("[data-page]").forEach(b=>b.classList.toggle("active",b.dataset.page===id));
+  const target=document.getElementById(id);
+  if(target)target.classList.add("active");
+  document.getElementById("mobileLinks")?.classList.remove("open");
+  window.scrollTo({top:0,behavior:"smooth"});
+  history.replaceState(null,"","#"+id);
+}
+
+function openGitHub(){window.open(GITHUB,"_blank","noopener,noreferrer")}
+
+function escapeHtml(v){return String(v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
+
+function renderTrace(){
+  const el=document.getElementById("trace");
+  el.innerHTML=trace.length?trace.map((x,i)=>`<div class="chip"><span>${String(i+1).padStart(2,"0")}</span>${escapeHtml(x)}<button onclick="removeActivity(${i})" aria-label="Remove">×</button></div>`).join(""):`<span class="trace-empty">Select an activity to begin.</span>`;
+}
+function removeActivity(i){const chip=document.querySelectorAll(".chip")[i];if(chip){chip.classList.add("removing");setTimeout(()=>{trace.splice(i,1);renderTrace()},150)}}
+function clearTrace(){trace=[];renderTrace();document.getElementById("predictionStatus").textContent="Awaiting a trace.";document.getElementById("prediction").innerHTML=`<div class="placeholder-bar"><span>Prediction 01</span><i></i></div><div class="placeholder-bar"><span>Prediction 02</span><i></i></div><div class="placeholder-bar"><span>Prediction 03</span><i></i></div>`}
+function sample(n){const e={1:["W_Completeren aanvraag"],2:["W_Completeren aanvraag","W_Nabellen offertes"],3:["W_Beoordelen fraude","W_Nabellen incomplete dossiers"],4:["W_Valideren aanvraag"]};trace=[...(e[n]||[])];renderTrace();go("predict")}
+
+async function predict(){
+  const status=document.getElementById("predictionStatus"),output=document.getElementById("prediction"),button=document.getElementById("predictButton");
+  if(!trace.length){status.textContent="Add at least one activity.";return}
+  button.classList.add("loading");button.innerHTML='<span class="spinner"></span> Predicting…';status.textContent="Processing the case history…";output.innerHTML="";
+  try{
+    const r=await fetch("/predict",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({trace})});
+    const d=await r.json();if(!r.ok)throw Error(d.detail||"Prediction failed.");
+    let a=d.predictions||d.results||[];
+    if(!Array.isArray(a)&&typeof a==="object")a=Object.entries(a).map(([activity,probability])=>({activity,probability}));
+    a=a.map(x=>({activity:x.activity||x.label||x.class||x[0],probability:Number(x.probability??x.confidence??x.score??x[1])})).sort((x,y)=>y.probability-x.probability).slice(0,3);
+    status.textContent=`Prediction complete · ${Number(d.inference_ms||0).toFixed(1)} ms`;
+    output.innerHTML=a.map((x,i)=>`<div class="prediction-row" style="--delay:${i*90}ms"><span>${String(i+1).padStart(2,"0")}</span><div><b>${escapeHtml(x.activity)}</b><div class="bar"><i style="width:${Math.min(100,Math.max(0,x.probability*100))}%"></i></div></div><strong>${(x.probability*100).toFixed(2)}%</strong></div>`).join("");
+  }catch(e){status.textContent=e.message}
+  finally{button.classList.remove("loading");button.innerHTML='Predict <b>→</b>'}
+}
+
+function countUp(el){
+  const target=Number(el.dataset.count),duration=1100,start=performance.now();
+  function tick(now){const p=Math.min(1,(now-start)/duration),v=Math.floor((1-Math.pow(1-p,3))*target);el.textContent=v.toLocaleString();if(p<1)requestAnimationFrame(tick)}
+  requestAnimationFrame(tick)
+}
+
+document.addEventListener("DOMContentLoaded",()=>{
+  document.querySelectorAll("[data-page]").forEach(b=>b.addEventListener("click",()=>go(b.dataset.page)));
+  ["githubNav","githubHero","githubFooter"].forEach(id=>document.getElementById(id)?.addEventListener("click",openGitHub));
+  document.getElementById("menu")?.addEventListener("click",()=>document.getElementById("mobileLinks").classList.toggle("open"));
+
+  const list=document.getElementById("activityList");
+  CLASSES.forEach((x,i)=>{const b=document.createElement("button");b.className="activity-btn";b.innerHTML=`<span>${String(i+1).padStart(2,"0")}</span>${escapeHtml(x)}`;b.onclick=()=>{trace.push(x);renderTrace()};list.appendChild(b)});
+  document.getElementById("clearTrace")?.addEventListener("click",clearTrace);
+  document.getElementById("predictButton")?.addEventListener("click",predict);
+  document.querySelectorAll("[data-example]").forEach(b=>b.addEventListener("click",()=>sample(Number(b.dataset.example))));
+  const tbody=document.querySelector("#classTable tbody");
+  Object.keys(F1).forEach(k=>{const tr=document.createElement("tr");tr.innerHTML=`<td>${escapeHtml(k)}</td><td>${(F1[k]*100).toFixed(2)}%</td><td>${Number(SUPPORT[k]).toLocaleString()}</td>`;tbody.appendChild(tr)});
+
+  const observer=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");if(e.target.matches(".stat strong"))countUp(e.target);observer.unobserve(e.target)}}),{threshold:.15});
+  document.querySelectorAll(".stat strong,.reveal,.three-up article,.research-split,.result-metrics,.chart-grid article").forEach(el=>observer.observe(el));
+
+  const hash=location.hash.replace("#","");
+  if(hash&&document.getElementById(hash))go(hash);
+});
+</script>
+</body>
+</html>

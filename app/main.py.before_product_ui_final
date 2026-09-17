@@ -13,7 +13,6 @@ try:
 except Exception:
     NextActivityPredictor = None
 
-STATIC_DIR = Path(__file__).resolve().parent / "static"
 ROOT = Path(__file__).resolve().parents[1]
 FINAL = ROOT / "artifacts" / "final_experiment"
 CKPT = FINAL / "checkpoints"
@@ -45,12 +44,9 @@ METRICS = {
     "macro_f1": 0.6755298499943678,
     "weighted_f1": 0.754352805921297,
 }
-# BPIC 2012 W source log: 9,658 cases. 7,469 cases are represented in the
-# generated prefix-graph corpus used for this final experiment.
 DATASET = {
-    "source_cases": 9658,
-    "unique_cases": 7469,
     "total_graphs": 62755,
+    "unique_cases": 7469,
     "mean_nodes": 2.36,
     "mean_edges": 2.94,
     "train_graphs": 44295,
@@ -91,7 +87,7 @@ if NextActivityPredictor and CKPT.exists():
 
 app = FastAPI(
     title="ProcessGAT",
-    version="2.1.0",
+    version="2.0.0",
     description="Process intelligence and next-activity prediction.",
 )
 app.add_middleware(
@@ -101,14 +97,14 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-if STATIC_DIR.exists():
-    app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
-
+# Static asset routes. These fix the 404s for the real experiment visuals.
 if PLOTS.exists():
     app.mount("/plots", StaticFiles(directory=str(PLOTS)), name="plots")
 if ARCH.exists():
     app.mount("/architecture", StaticFiles(directory=str(ARCH)), name="architecture")
+if STATIC.exists():
+    app.mount("/static", StaticFiles(directory=str(STATIC)), name="static")
 
 
 class PredictRequest(BaseModel):
@@ -129,7 +125,7 @@ def health():
     return {
         "status": "healthy",
         "service": "ProcessGAT",
-        "version": "2.1.0",
+        "version": "2.0.0",
         "model_loaded": predictor is not None,
     }
 
@@ -138,7 +134,7 @@ def health():
 def model_info():
     return {
         "model": "ProcessGAT-XL",
-        "version": "2.1.0",
+        "version": "2.0.0",
         "parameters": 190895,
         "model_config": MODEL_CONFIG,
         "training_config": TRAINING_CONFIG,
@@ -188,12 +184,3 @@ def predict(req: PredictRequest):
         result["inference_ms"] = round(ms, 3)
         return result
     return {"trace": trace, "predictions": result, "inference_ms": round(ms, 3)}
-
-
-@app.get("/", response_class=HTMLResponse)
-def home():
-    html = (STATIC_DIR / "index.html").read_text()
-    html = html.replace("__CLASSES__", __import__("json").dumps(CLASSES))
-    html = html.replace("__F1__", __import__("json").dumps(F1))
-    html = html.replace("__SUPPORT__", __import__("json").dumps(SUPPORT))
-    return HTMLResponse(html)

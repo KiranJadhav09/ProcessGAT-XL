@@ -13,7 +13,6 @@ try:
 except Exception:
     NextActivityPredictor = None
 
-STATIC_DIR = Path(__file__).resolve().parent / "static"
 ROOT = Path(__file__).resolve().parents[1]
 FINAL = ROOT / "artifacts" / "final_experiment"
 CKPT = FINAL / "checkpoints"
@@ -101,14 +100,13 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-if STATIC_DIR.exists():
-    app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
-
 
 if PLOTS.exists():
     app.mount("/plots", StaticFiles(directory=str(PLOTS)), name="plots")
 if ARCH.exists():
     app.mount("/architecture", StaticFiles(directory=str(ARCH)), name="architecture")
+if STATIC.exists():
+    app.mount("/static", StaticFiles(directory=str(STATIC)), name="static")
 
 
 class PredictRequest(BaseModel):
@@ -188,12 +186,3 @@ def predict(req: PredictRequest):
         result["inference_ms"] = round(ms, 3)
         return result
     return {"trace": trace, "predictions": result, "inference_ms": round(ms, 3)}
-
-
-@app.get("/", response_class=HTMLResponse)
-def home():
-    html = (STATIC_DIR / "index.html").read_text()
-    html = html.replace("__CLASSES__", __import__("json").dumps(CLASSES))
-    html = html.replace("__F1__", __import__("json").dumps(F1))
-    html = html.replace("__SUPPORT__", __import__("json").dumps(SUPPORT))
-    return HTMLResponse(html)

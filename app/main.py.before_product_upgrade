@@ -1,0 +1,147 @@
+from pathlib import Path
+import time, json
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import HTMLResponse
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, Field
+
+try:
+    from app.predictor import NextActivityPredictor
+except Exception:
+    NextActivityPredictor = None
+
+ROOT=Path(__file__).resolve().parents[1]
+CKPT=ROOT/"artifacts/final_experiment/checkpoints"
+MODEL_CONFIG={"in_channels":6,"hidden":64,"num_layers":3,"heads":8,"edge_dim":8,"dropout":0.25}
+TRAINING_CONFIG={"epochs":100,"batch_size":256,"lr":0.0002,"weight_decay":0.0001,"label_smoothing":0.05,"warmup_epochs":5,"patience":20,"seed":42}
+METRICS={"top1":0.7603225708007812,"top3":0.9988172054290771,"macro_f1":0.6755298499943678,"weighted_f1":0.754352805921297}
+DATASET={"total_graphs":62755,"unique_cases":7469,"mean_nodes":2.36,"mean_edges":2.94,"train_graphs":44295,"validation_graphs":9160,"test_graphs":9300}
+CLASSES=["W_Afhandelen leads","W_Beoordelen fraude","W_Completeren aanvraag","W_Nabellen incomplete dossiers","W_Nabellen offertes","W_Valideren aanvraag"]
+F1={"W_Afhandelen leads":0.47376,"W_Beoordelen fraude":0.77273,"W_Completeren aanvraag":0.81775,"W_Nabellen incomplete dossiers":0.81713,"W_Nabellen offertes":0.81376,"W_Valideren aanvraag":0.35805}
+SUPPORT={"W_Afhandelen leads":175,"W_Beoordelen fraude":38,"W_Completeren aanvraag":2850,"W_Nabellen incomplete dossiers":1712,"W_Nabellen offertes":3409,"W_Valideren aanvraag":1116}
+
+predictor=None
+if NextActivityPredictor and CKPT.exists():
+    try: predictor=NextActivityPredictor(str(CKPT))
+    except Exception: predictor=None
+
+app=FastAPI(title="ProcessGAT-XL",version="1.1.0",description="Graph Attention Network for next-activity prediction.")
+app.add_middleware(CORSMiddleware,allow_origins=["*"],allow_credentials=True,allow_methods=["*"],allow_headers=["*"])
+
+class PredictRequest(BaseModel):
+    trace:list[str]=Field(...,min_length=1)
+
+@app.get("/",response_class=HTMLResponse)
+def home(): return HTML
+
+@app.get("/health")
+def health(): return {"status":"healthy","service":"ProcessGAT-XL","version":"1.1.0","model_loaded":predictor is not None}
+
+@app.get("/model-info")
+def model_info():
+    return {"model":"ProcessGAT-XL","version":"1.1.0","parameters":190895,"model_config":MODEL_CONFIG,"training_config":TRAINING_CONFIG,
+            "evaluation_protocol":{"split":"case-level","checkpoint_selection":"validation Macro-F1","test_usage":"held-out evaluation after model selection"},"metrics":METRICS,"dataset":DATASET}
+
+@app.get("/metadata")
+def metadata(): return model_info()
+
+@app.get("/analytics")
+def analytics(): return {"metrics":METRICS,"dataset":DATASET,"classes":CLASSES,"class_f1":F1,"class_support":SUPPORT}
+
+@app.get("/predict")
+def predict_help(): return {"message":"POST /predict with JSON {'trace':['activity 1','activity 2']}"}
+
+@app.post("/predict")
+def predict(req:PredictRequest):
+    if predictor is None: raise HTTPException(503,"Model predictor is not available.")
+    trace=[str(x).strip() for x in req.trace if str(x).strip()]
+    t=time.perf_counter()
+    try: result=predictor.predict(trace)
+    except Exception as e: raise HTTPException(400,str(e))
+    ms=(time.perf_counter()-t)*1000
+    if isinstance(result,dict): result["inference_ms"]=round(ms,3); return result
+    return {"trace":trace,"predictions":result,"inference_ms":round(ms,3)}
+
+HTML=r"""
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ProcessGAT-XL | AI Process Intelligence</title>
+<style>
+:root{--bg:#f5f7fb;--card:#fff;--ink:#172033;--muted:#667085;--line:#e4e7ec;--navy:#101828;--blue:#175cd3;--soft:#eef4ff;--green:#067647;--shadow:0 12px 35px rgba(16,24,40,.08);--r:18px}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.55}
+header{position:sticky;top:0;z-index:5;background:rgba(255,255,255,.96);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}.top{max-width:1280px;margin:auto;padding:14px 24px;display:flex;align-items:center;gap:20px}
+.brand{display:flex;align-items:center;gap:10px;min-width:235px}.logo{width:40px;height:40px;border-radius:12px;background:var(--navy);color:#fff;display:grid;place-items:center;font-weight:800}.brand b{display:block}.brand span{font-size:12px;color:var(--muted)}
+nav{display:flex;gap:3px;flex:1;overflow:auto}nav button{border:0;background:transparent;padding:9px 11px;border-radius:9px;color:#475467;white-space:nowrap}nav button.active,nav button:hover{background:var(--soft);color:var(--blue);font-weight:650}.status{font-size:12px;color:var(--green);white-space:nowrap}.dot{display:inline-block;width:7px;height:7px;background:#12b76a;border-radius:50%;margin-right:6px}
+main{max-width:1280px;margin:auto;padding:32px 24px 70px}.page{display:none}.page.active{display:block}.hero{display:grid;grid-template-columns:1.35fr .65fr;gap:20px}.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:24px;margin-bottom:18px}.hero .card:first-child{padding:38px}
+.eyebrow{text-transform:uppercase;letter-spacing:.12em;color:var(--blue);font-weight:750;font-size:12px}h1{font-size:clamp(34px,4vw,52px);line-height:1.08;letter-spacing:-.035em;margin:12px 0 16px}h2{font-size:23px;margin:0 0 8px}.lead{font-size:18px;color:#475467;max-width:760px}.note{font-size:13px;color:#475467}
+.pills{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px}.pill{background:#f2f4f7;border:1px solid var(--line);padding:7px 10px;border-radius:999px;font-size:12px;font-weight:650}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:20px 0}.metric strong{display:block;font-size:30px}.metric span{color:var(--muted);font-size:13px}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.pipeline{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}.step{padding:16px 12px;background:#f8f9fc;border:1px solid var(--line);border-radius:14px}.step b{display:block;font-size:13px}.step span{display:block;color:var(--muted);font-size:12px;margin-top:4px}.simple{background:#f8fbff;border-left:4px solid var(--blue)}.warning{background:#fffaeb;border-left:4px solid #f79009}
+.kv{display:grid;grid-template-columns:180px 1fr;border-top:1px solid var(--line);padding:10px 0;font-size:13px}.kv:first-child{border-top:0}.kv b{color:#344054}.code{background:#101828;color:#e4e7ec;border-radius:14px;padding:16px;overflow:auto;font:12px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace}
+button.primary,.smallbtn{padding:9px 12px;border-radius:9px;border:1px solid var(--line);background:#fff}.primary{background:var(--navy);color:#fff;border-color:var(--navy)}select{width:100%;padding:11px;border:1px solid #d0d5dd;border-radius:9px;background:#fff}
+.trace{display:flex;flex-wrap:wrap;gap:8px;min-height:48px;padding:12px;background:#f8f9fc;border:1px dashed #98a2b3;border-radius:12px}.activity{padding:7px 9px;background:#fff;border:1px solid #d0d5dd;border-radius:9px;font-size:12px}.remove{border:0;background:none;color:#98a2b3}.rank{display:grid;grid-template-columns:34px 1fr 65px;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);font-size:13px}.bar{height:8px;background:#eaecf0;border-radius:99px;overflow:hidden;margin-top:5px}.bar i{display:block;height:100%;background:var(--blue)}
+img.chart,img.arch{width:100%;border:1px solid var(--line);border-radius:12px}.arch{max-height:520px;object-fit:contain}table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;padding:10px;border-bottom:1px solid var(--line)}th{background:#f8f9fc;color:#475467}
+footer{max-width:1280px;margin:auto;padding:0 24px 30px;color:var(--muted);font-size:12px}
+@media(max-width:900px){.hero,.grid2{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,1fr)}.pipeline{grid-template-columns:repeat(2,1fr)}.status{display:none}}@media(max-width:560px){.metrics,.grid3{grid-template-columns:1fr}.top{padding:12px 14px}.brand{min-width:auto}.brand>div:last-child{display:none}main{padding:22px 14px}.hero .card:first-child{padding:25px}.kv{grid-template-columns:1fr}}:focus-visible{outline:3px solid #84adff;outline-offset:2px}
+</style></head><body>
+<header><div class="top"><div class="brand"><div class="logo">PG</div><div><b>ProcessGAT-XL</b><span>AI Engineering · Process Intelligence</span></div></div>
+<nav><button class="active" data-p="overview">Overview</button><button data-p="how">How It Works</button><button data-p="try">Try the AI</button><button data-p="model">Model Lab</button><button data-p="results">Data & Results</button><button data-p="api">API & Deployment</button></nav><div class="status"><i class="dot"></i>Model online</div></div></header>
+<main>
+<section id="overview" class="page active"><div class="hero"><div class="card"><div class="eyebrow">Graph neural network · next-activity prediction</div><h1>Predict what happens next in a business process.</h1><p class="lead">ProcessGAT-XL turns an event-log prefix into a directed graph and uses graph attention to estimate the next activity.</p><div class="pills"><span class="pill">BPIC 2012 W</span><span class="pill">62,755 prefix graphs</span><span class="pill">190,895 parameters</span><span class="pill">Case-level evaluation</span></div></div><div class="card"><h2>What the AI sees</h2><p class="note">Activities become nodes. Directly-following relationships become directed edges. Node and edge attributes provide process context.</p><div class="card simple" style="box-shadow:none;padding:15px"><b>In simple words</b><br><span class="note">Show the model what has happened so far; it estimates what may happen next.</span></div></div></div>
+<div class="metrics"><div class="card metric"><strong>76.03%</strong><span>Held-out Top-1</span></div><div class="card metric"><strong>99.88%</strong><span>Held-out Top-3</span></div><div class="card metric"><strong>67.55%</strong><span>Held-out Macro-F1</span></div><div class="card metric"><strong>190.9K</strong><span>Trainable parameters</span></div></div>
+<div class="card"><h2>End-to-end AI engineering pipeline</h2><p class="note">Data → representation → learning → evaluation → deployment.</p><div class="pipeline"><div class="step"><b>01 · Event log</b><span>BPIC 2012 W</span></div><div class="step"><b>02 · Prefixes</b><span>Partial cases</span></div><div class="step"><b>03 · Graphs</b><span>Nodes + edges</span></div><div class="step"><b>04 · GATv2</b><span>Attention learning</span></div><div class="step"><b>05 · Evaluation</b><span>Top-k + F1</span></div><div class="step"><b>06 · API</b><span>FastAPI + Docker</span></div></div></div>
+<div class="grid2"><div class="card"><h2>Why this is AI engineering</h2><p class="note">The project spans data preparation, graph construction, feature engineering, model design, reproducible training, checkpointing, evaluation, inference and web deployment.</p></div><div class="card warning"><h2>Research integrity</h2><p class="note">The final checkpoint was selected on validation Macro-F1 and the test set was then used for held-out evaluation. Earlier exploratory tuning used a test-like subset, so it is not evidence of globally optimal hyperparameters.</p></div></div></section>
+
+<section id="how" class="page"><div class="card"><div class="eyebrow">Methodology</div><h1>How the model works</h1><p class="lead">A process trace becomes a graph, the graph is encoded by attention layers, and a graph-level classifier predicts one of six activities.</p></div><div class="grid2"><div class="card"><h2>1 · Event log → graph</h2><p class="note">For each case prefix, unique activities are nodes. Directly-following relationships form directed edges. Repeated transitions contribute to normalized transition frequency.</p></div><div class="card"><h2>2 · Six node features</h2><p class="note">Activity index, first occurrence position, occurrence frequency, mean elapsed time from case start, resource diversity and amount requested are normalized into node features.</p></div></div><div class="card"><h2>3 · Graph attention</h2><p class="note">Three residual GATv2 blocks use eight attention heads. Edge information is encoded before attention. LayerNorm, GELU and dropout support stable training.</p><div class="code">6 node features + edge attributes
+→ edge encoder
+→ GATv2 × 3 residual blocks
+→ LayerNorm + GELU + dropout
+→ learned attention + global mean/max pooling
+→ MLP classifier
+→ 6-class probabilities</div></div><div class="grid3"><div class="card"><h2>Attention</h2><p class="note">Learns which neighboring activities matter more.</p></div><div class="card"><h2>Pooling</h2><p class="note">Compresses node representations into a graph representation.</p></div><div class="card"><h2>Classifier</h2><p class="note">Maps the representation to next-activity classes.</p></div></div></section>
+
+<section id="try" class="page"><div class="card"><div class="eyebrow">Interactive inference</div><h1>Try the AI</h1><p class="lead">Build a partial trace and call the deployed model.</p></div><div class="grid2"><div class="card"><h2>Process trace</h2><p class="note">Add activities in chronological order.</p><div style="display:flex;gap:7px;flex-wrap:wrap;margin:14px 0"><button class="smallbtn" onclick="sample(['W_Completeren aanvraag'])">Example 1</button><button class="smallbtn" onclick="sample(['W_Completeren aanvraag','W_Nabellen offertes'])">Example 2</button><button class="smallbtn" onclick="sample(['W_Beoordelen fraude','W_Nabellen incomplete dossiers'])">Example 3</button><button class="smallbtn" onclick="sample(['W_Valideren aanvraag'])">Example 4</button></div><label for="activity">Add activity</label><select id="activity" style="margin-top:6px"><option value="">Select an activity…</option></select><p><button class="primary" onclick="addActivity()">Add to trace</button> <button class="smallbtn" onclick="clearTrace()">Clear</button></p><div id="trace" class="trace"></div><button class="primary" style="width:100%;margin-top:14px" onclick="predict()">Run prediction</button></div><div class="card"><h2>Prediction</h2><p id="predictionStatus" class="note">No prediction yet.</p><div id="prediction"></div></div></div></section>
+
+<section id="model" class="page"><div class="card"><div class="eyebrow">Model laboratory</div><h1>Architecture & configuration</h1><p class="lead">The deployed model contains 190,895 trainable parameters.</p></div><div class="grid2"><div class="card"><h2>Architecture</h2><img class="arch" src="/architecture/processgat_xl_architecture.png" alt="ProcessGAT-XL architecture"></div><div class="card"><h2>Model configuration</h2><div class="kv"><b>Graph layer</b><span>GATv2Conv</span></div><div class="kv"><b>Hidden dimension</b><span>64</span></div><div class="kv"><b>Attention heads</b><span>8</span></div><div class="kv"><b>Blocks</b><span>3 residual attention blocks</span></div><div class="kv"><b>Edge dimension</b><span>8</span></div><div class="kv"><b>Dropout</b><span>0.25</span></div><div class="kv"><b>Parameters</b><span>190,895</span></div></div></div><div class="card"><h2>Training configuration</h2><div class="grid3"><div class="kv"><b>Optimizer</b><span>AdamW</span></div><div class="kv"><b>Learning rate</b><span>2 × 10⁻⁴</span></div><div class="kv"><b>Batch size</b><span>256</span></div><div class="kv"><b>Weight decay</b><span>1 × 10⁻⁴</span></div><div class="kv"><b>Label smoothing</b><span>0.05</span></div><div class="kv"><b>Early stopping</b><span>Patience 20</span></div></div></div></section>
+
+<section id="results" class="page"><div class="card"><div class="eyebrow">Evidence</div><h1>Data & results</h1><p class="lead">Headline metrics are from the held-out final test evaluation.</p></div><div class="metrics"><div class="card metric"><strong>62,755</strong><span>Prefix graphs</span></div><div class="card metric"><strong>7,469</strong><span>Unique cases</span></div><div class="card metric"><strong>2.36</strong><span>Mean nodes / graph</span></div><div class="card metric"><strong>2.94</strong><span>Mean edges / graph</span></div></div><div class="grid2"><div class="card"><h2>Test metrics</h2><table><tr><th>Metric</th><th>Value</th><th>Interpretation</th></tr><tr><td>Top-1</td><td>76.03%</td><td>Correct class is rank 1</td></tr><tr><td>Top-3</td><td>99.88%</td><td>Correct class is in top 3</td></tr><tr><td>Macro-F1</td><td>67.55%</td><td>Equal class weighting</td></tr><tr><td>Weighted-F1</td><td>75.44%</td><td>Support weighted</td></tr></table></div><div class="card"><h2>Case-level split</h2><div class="kv"><b>Train</b><span>44,295 graphs</span></div><div class="kv"><b>Validation</b><span>9,160 graphs</span></div><div class="kv"><b>Test</b><span>9,300 graphs</span></div><p class="note">Case-level splitting reduces leakage between prefixes from the same case.</p></div></div><div class="card"><h2>Per-class F1</h2><table id="classTable"><tr><th>Activity</th><th>F1</th><th>Support</th></tr></table></div><div class="grid2"><div class="card"><h2>Normalized confusion matrix</h2><img class="chart" src="/plots/normalized_confusion_matrix.png" alt="Normalized confusion matrix"></div><div class="card"><h2>Validation Top-k</h2><img class="chart" src="/plots/validation_topk.png" alt="Validation Top-k"></div></div><div class="grid2"><div class="card"><h2>Training loss</h2><img class="chart" src="/plots/training_loss.png" alt="Training loss"></div><div class="card"><h2>Validation Macro-F1</h2><img class="chart" src="/plots/validation_macro_f1.png" alt="Validation Macro-F1"></div></div></section>
+
+<section id="api" class="page"><div class="card"><div class="eyebrow">Software engineering</div><h1>API & deployment</h1><p class="lead">The model is exposed as an HTTP service for application integration.</p></div><div class="grid2"><div class="card"><h2>Endpoints</h2><div class="kv"><b>GET /health</b><span>Service and model health</span></div><div class="kv"><b>GET /model-info</b><span>Model/training/evaluation metadata</span></div><div class="kv"><b>GET /analytics</b><span>Metrics and dataset analytics</span></div><div class="kv"><b>POST /predict</b><span>Next-activity inference</span></div></div><div class="card"><h2>Example request</h2><div class="code">POST /predict
+Content-Type: application/json
+
+{"trace":["W_Completeren aanvraag","W_Nabellen offertes"]}</div></div></div><div class="card"><h2>Deployment architecture</h2><div class="pipeline"><div class="step"><b>GitHub</b><span>Version control</span></div><div class="step"><b>Docker</b><span>Reproducible runtime</span></div><div class="step"><b>FastAPI</b><span>HTTP inference</span></div><div class="step"><b>Checkpoint</b><span>Selected on validation</span></div><div class="step"><b>Render</b><span>Cloud service</span></div><div class="step"><b>Browser</b><span>Interactive UI</span></div></div></div><div class="grid2"><div class="card"><h2>Engineering checklist</h2><p class="note">✓ Git versioning<br>✓ Dockerized service<br>✓ Health endpoint<br>✓ Metadata endpoint<br>✓ Prediction API<br>✓ Held-out evaluation<br>✓ Interactive dashboard</p></div><div class="card warning"><h2>Scope</h2><p class="note">Deployment demonstrates integration and reproducible inference. It does not by itself prove production reliability, business impact or research novelty.</p></div></div></section>
+</main><footer>ProcessGAT-XL · AI engineering / research demonstration · Held-out final evaluation</footer>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll("nav button").forEach(function (button) {
+        button.addEventListener("click", function () {
+            document.querySelectorAll("nav button").forEach(function (b) {
+                b.classList.remove("active");
+            });
+
+            document.querySelectorAll(".page").forEach(function (page) {
+                page.classList.remove("active");
+            });
+
+            button.classList.add("active");
+
+            const target = document.getElementById(button.dataset.p);
+            if (target) {
+                target.classList.add("active");
+                window.scrollTo({top: 0, behavior: "smooth"});
+            }
+        });
+    });
+});
+
+
+C.forEach(x=>{let o=document.createElement("option");o.value=x;o.textContent=x;activity.appendChild(o)});
+Object.keys(F).forEach(k=>{let r=document.createElement("tr");r.innerHTML="<td>"+k+"</td><td>"+(F[k]*100).toFixed(2)+"%</td><td>"+S[k].toLocaleString()+"</td>";classTable.appendChild(r)});
+function render(){traceEl=document.getElementById("trace");traceEl.innerHTML=trace.length?trace.map((x,i)=>"<div class='activity'>"+(i+1)+". "+x+" <button class='remove' onclick='removeActivity("+i+")'>×</button></div>").join(""):"<span class='note'>No activities added yet.</span>"}
+function addActivity(){let x=activity.value;if(x){trace.push(x);activity.value="";render()}}
+function removeActivity(i){trace.splice(i,1);render()}
+function clearTrace(){trace=[];render();predictionStatus.textContent="No prediction yet.";prediction.innerHTML=""}
+function sample(x){trace=[...x];render();document.querySelector("[data-p='try']").click()}
+async function predict(){if(!trace.length){predictionStatus.textContent="Add at least one activity.";return}predictionStatus.textContent="Running inference…";try{let r=await fetch("/predict",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({trace})});let d=await r.json();if(!r.ok)throw Error(d.detail||"Prediction failed");let a=d.predictions||d.results||[];if(!Array.isArray(a)&&typeof a==="object")a=Object.entries(a).map(([activity,probability])=>({activity,probability}));a=a.map(x=>({activity:x.activity||x.label||x.class||x[0],probability:Number(x.probability??x.confidence??x.score??x[1])})).sort((x,y)=>y.probability-x.probability).slice(0,3);predictionStatus.textContent="Inference completed in "+Number(d.inference_ms||0).toFixed(1)+" ms";prediction.innerHTML=a.map((x,i)=>"<div class='rank'><b>#"+(i+1)+"</b><div>"+x.activity+"<div class='bar'><i style='width:"+Math.min(100,x.probability*100)+"%'></i></div></div><b>"+(x.probability*100).toFixed(2)+"%</b></div>").join("")}catch(e){predictionStatus.textContent=e.message}}
+render();
+</script></body></html>
+""".replace("__CLASSES__", json.dumps(CLASSES)).replace("__F1__", json.dumps(F1)).replace("__SUPPORT__", json.dumps(SUPPORT))
